@@ -34,8 +34,8 @@ def main(filepath):
         else:
             financials_data = ef.DataTypeUpdate.update_data(financials_year_form)
         
-        pbid = new_year.get_pbid()
-        return financials_data, pbid
+        
+        return financials_data
 
 
 df = pd.read_excel('12_10_files.xlsx')
@@ -45,8 +45,8 @@ updated_df = df.iloc[2500:3000]['FILEPATH']
 if __name__== "__main__":
     for filepath in updated_df:
         try:
-            financials_data, pbid = main(filepath)
-            if financials_data != {}:
+            financials_data = main(filepath)
+            if len(financials_data) > 2:
                 main_df.loc[main_df['FILEPATH'] == filepath,'FINANCIALS_EXTRACTED'] = True
                 main_df.loc[main_df['FILEPATH'] == filepath,'PROCESSED_DATE'] = date.today()
                 for datavalues in financials_data.items():
