@@ -18,6 +18,21 @@ class Testing(unittest.TestCase):
         self.assertEqual(ef.DataType.year('05/05/2016'),
                                           datetime.strptime('05/05/2016','%m/%d/%Y'))
 
+    def test_pdf_type(self):
+        form = 'C:/Users/spencer.klug/MORNINGSTAR INC/Fight Club - Valuations Filings/India/Filings/$ To Process/Financial Forms/Batch 1/161456-32/Annual Returns and Balance Sheet eForms/Form 23AC-121007%12-10-2007.pdf'
+        xml = 'C:/Users/spencer.klug/MORNINGSTAR INC/Fight Club - Valuations Filings/India/Filings/$ To Process/Financial Forms/Batch 5/60912-37/Annual Returns and Balance Sheet eForms/Form AOC-4-051115%05-11-2015.pdf'
+        with open(form,'rb') as open_form:
+            pdf = pypdf.PdfFileReader(open_form)
+            xfa = ef.findInDict('/XFA',pdf.resolvedObjects)
+            answer = ef.PdfSetup.pdf_type(xfa)
+            self.assertEqual(answer,'form')
+        with open(xml,'rb') as open_xml:
+            pdf = pypdf.PdfFileReader(open_xml)
+            xfa = ef.findInDict('/XFA',pdf.resolvedObjects)
+            answer = ef.PdfSetup.pdf_type(xfa)
+            self.assertEqual(answer,'xml')
+        
+
     def test_aoc4(self):
         aoc4 = 'C:/Users/spencer.klug/MORNINGSTAR INC/Fight Club - Valuations Filings/India/Filings/$ To Process/Financial Forms/Batch 5/60912-37/Annual Returns and Balance Sheet eForms/Form AOC-4-051115%05-11-2015.pdf'
         aoc_base = datetime.strptime('31/03/2015','%d/%m/%Y')
@@ -214,6 +229,7 @@ class Testing(unittest.TestCase):
             d1 = ef.DataTypeUpdate.update_data(financials_year)
         else:
             d1 = ef.DataTypeUpdate.update_data(financials_year2)
+        print(d1)
         self.assertEqual(d1,data)
 
 if __name__ == '__main__':

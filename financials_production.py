@@ -46,6 +46,9 @@ if __name__== "__main__":
     for filepath in updated_df:
         try:
             financials_data = main(filepath)
+            # Sometimes the financials_data dictionary only includes year or is empty  
+            # This happens if the underlying document doesn't contain any information
+            # We do not need to track that 
             if len(financials_data) > 2:
                 main_df.loc[main_df['FILEPATH'] == filepath,'FINANCIALS_EXTRACTED'] = True
                 main_df.loc[main_df['FILEPATH'] == filepath,'PROCESSED_DATE'] = date.today()
