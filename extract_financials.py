@@ -135,14 +135,14 @@ class PdfSetup:
     def __init__(self,pdf_reader):
         self.__pdf = pdf_reader 
 
-    # Function determines if we need to extract the data through the xml function or the form function 
-    # DEPRICATED function no Longer in use because sometimes the .getFormTextFields returns a dictionary but fields are not labeled. 
-        # Using the xml/beautifulsoup method is much more accurate and comprehensive   
+    # Some filings the xml data is not available. If the data is not avialable then we only want to use form method  
+    # Using the xml/beautifulsoup method is much more accurate and comprehensive   
+    #ADD TO THIS - IF pdf.getFormTextFields() = {} then form
     def pdf_type(xfa_data):
         if xfa_data == None:
             document_type = 'form'
         else:
-            document_type = 'xml'
+            document_type = 'both'
         return document_type  
     
     # Function returns the proper version of XML data. Data is only contained in 7 or 11, comparing amount of data in each response to return the best result
@@ -213,7 +213,7 @@ class DataType:
         return value
 
 # Updates an entire dictionary values into the correct data type using methods from the DataType class
-class DataTypeUpdate():
+class DataTypeUpdate:
     
     def update_data(financial_dictionary):
         updated_financial_dictionary = {}   
@@ -224,6 +224,13 @@ class DataTypeUpdate():
                 dict_value = DataType.non_year(item[1])
             updated_financial_dictionary[item[0]] = dict_value
         return updated_financial_dictionary
+    
+    def results_update(financials_year_xml,financials_year_form):
+        if len(financials_year_xml) > len(financials_year_form):
+            return financials_year_xml
+        elif len(financials_year_form) > len(financials_year_xml):
+            return financials_year_form
+
 
 # Search through underlying data for /XFA items
 def findInDict(needle, haystack):
