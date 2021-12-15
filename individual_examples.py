@@ -14,9 +14,9 @@ b = 'C:/Users/spencer.klug/MORNINGSTAR INC/Fight Club - Valuations Filings/India
 t = 'C:/Users/spencer.klug/MORNINGSTAR INC/Fight Club - Valuations Filings/India/Filings/$ To Process/Financial Forms/Batch 1/221962-42/Annual Returns and Balance Sheet eForms/Frm23ACA-241110 for the FY ending on-310310%30-11-2010.pdf'
 ten = 'C:/Users/spencer.klug/MORNINGSTAR INC/Fight Club - Valuations Filings/India/Filings/$ To Process/Financial Forms/Batch 1/183208-60/Annual Returns and Balance Sheet eForms/Form23AC-081010 for the FY ending on-310310%10-10-2010.pdf'
 six_eight = 'C:/Users/spencer.klug/MORNINGSTAR INC/Fight Club - Valuations Filings/India/Filings/$ To Process/Financial Forms/Batch 1/184620-16/Annual Returns and Balance Sheet eForms/Frm23ACA-121011 for the FY ending on-310310%13-10-2011.pdf'
+a = 'C:/Users/spencer.klug/MORNINGSTAR INC/Fight Club - Valuations Filings/India/Filings/$ To Process/Financial Forms/Batch 1/222298-39/Annual Returns and Balance Sheet eForms/Form 23ACA XBRL-191213-181213 for the FY ending on-310313%18-12-2013.pdf'
 
-
-new_year = ef.DataExtration.from_filepath(six_eight)
+new_year = ef.DataExtration.from_filepath(aoc4)
 with open(new_year.get_filepath(),'rb') as open_pdf:
     pdf_file_reader_object=pypdf.PdfFileReader(open_pdf,strict=False)
     pdf_object = ef.PdfSetup(pdf_file_reader_object)
@@ -33,6 +33,7 @@ with open(new_year.get_filepath(),'rb') as open_pdf:
         xml = pdf_object.xfa_extractor(xfa)
         base_soup = BeautifulSoup(xml,'lxml')
         financials_year_xml = new_year.extractxfa(base_soup)
+        
 
         financials_data = ef.DataTypeUpdate.results_update(financials_year_xml,financials_year_form)
         financials_data = ef.DataTypeUpdate.update_data(financials_data)

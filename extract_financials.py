@@ -216,6 +216,9 @@ class DataType:
 class DataTypeUpdate:
     
     def update_data(financial_dictionary):
+        if financial_dictionary == None:
+            updated_financial_dictionary = {}
+            return updated_financial_dictionary
         updated_financial_dictionary = {}   
         for item in financial_dictionary.items():
             if item[0] == 'YEAR':
