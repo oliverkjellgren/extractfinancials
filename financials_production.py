@@ -60,7 +60,6 @@ def main(filepath):
         return financials_data
 
 
-# HOW I would do it
 if __name__== "__main__":
     df = pd.read_excel('12_10_files.xlsx')  # never have running code that isnt config or global variables outside of main or a method
     main_df = df.iloc[2500:3000]
