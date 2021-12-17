@@ -86,27 +86,23 @@ XFA_ = {}
 GET_FORM_TEXT_FIELDS_DICTIONARY = {}
 
 #Putting the human readable dictionary into XFA_
-for i in HUMAN_EXTRACTION_XFA.items():
-    line_item_title = i[0]
-    line_item_values = i[1]
-    for values in line_item_values:
+for key, value in HUMAN_EXTRACTION_XFA.items(): #items iterates though dict and unpack key value pairs as tuples
+    for v in value:
         #print(line_item_title,values)  
-        XFA_[values] = line_item_title
+        XFA_[v] = key
 
 #Putting the human readable dictionary into GET_FORM_TEXT_FIELDS_DICTIONARY
-for i in HUMAN_GET_FORM_TEXT_FIELDS_DICTIONARY.items():
-    line_item_title = i[0]
-    line_item_values = i[1]
-    for values in line_item_values:
+for key, value in HUMAN_GET_FORM_TEXT_FIELDS_DICTIONARY.items():
+    for v in value:
         #print(line_item_title,values)  
-        GET_FORM_TEXT_FIELDS_DICTIONARY[values] = line_item_title
+        GET_FORM_TEXT_FIELDS_DICTIONARY[v] = key
 
 # Creates an object from inputting thefilepath 
 class FinancialYear:
     def __init__(self,pbid,year,file_path):
         self.__pbid = pbid
         self.__year = year
-        self.__filepath =  file_path
+        self.__filepath = file_path
     
     def set_pbid(self, pbid):
         self.__pbid = pbid
@@ -124,9 +120,10 @@ class FinancialYear:
         return self.__filepath
   
     @classmethod
-    def from_filepath(cls,file_path):
-        pbid = re.findall('[0-9][0-9][0-9]+\-[0-9][0-9]',file_path)[0]
-        year = re.findall('[0-9][0-9]\-[0-9][0-9]\-[0-9][0-9][0-9][0-9]',file_path)[0]
+    def from_filepath(cls ,file_path: str):  #use type hinting when you can, make code more readable and will throw error if a worng data type comes through
+        #if you are finding all and getting the first one, just use find
+        pbid = re.find(r'\d{3}+\-\d{2}',file_path)  #r before the string designates it as regular expression
+        year = re.findall(r'[0-9][0-9]\-[0-9][0-9]\-[0-9][0-9][0-9][0-9]',file_path)[0]
         year = datetime.strptime(year, '%d-%m-%Y')
         return cls(pbid,year,file_path)
 
@@ -139,7 +136,16 @@ class PdfSetup:
     # Using the xml/beautifulsoup method is much more accurate and comprehensive   
     #ADD TO THIS - IF pdf.getFormTextFields() = {} then form
     def pdf_type(xfa_data):
-        if xfa_data == None:
+        #below is how documentation should look, you can get an extention to generate these automatically
+        """[Summary]
+
+        Args:
+            xfa_data ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
+        if xfa_data:  #no need for == None here, if valiable is an if exists check
             document_type = 'form'
         else:
             document_type = 'both'
@@ -149,11 +155,11 @@ class PdfSetup:
     def xfa_extractor(self,xfa_base):
         seven = xfa_base[7].getObject().getData()
         eleven =  xfa_base[11].getObject().getData()
+        # personally dont like assigning useless varibles, except for better readability
         if len(seven) > len(eleven):
-            xml = seven
+            return seven
         else:
-            xml = eleven
-        return xml
+            return eleven
 
 # Class is used to extract financials either in xfa or .getFormTextFields style 
 # The format of data (xfa vs. .getFormTextFields) depends on how old the document is  
@@ -162,24 +168,24 @@ class DataExtration(FinancialYear):
     # Taking the beautifulsoup data and iterating through possible bs4 search names & adding non-null values into a dictionary   
     def extractxfa(self,soup):
         financial_year = {}
-        for financial_line_items in XFA_.items():
-            searchable_value = financial_line_items[0]
-            soup_values = soup.findAll(searchable_value)
-            for value in soup_values:
+        for key, value in XFA_.items(): # again here items returns an iterator of (key), (value)
+            #searchable_value = financial_line_items[0]  # this is redundant varible assignment, just use the variable from the for loop
+            # soup_values = soup.findAll(key)  #even this isnt nessecary as you dont use the list oter than the for loop below
+            for value in soup.findAll(key):
                 if value.text != '':
-                    column = financial_line_items[1] #updated
-                    financial_item =  value.text
-                    financial_year[column] = financial_item
+                    #column = financial_line_items[1] #updated
+                    #financial_item =  value.text
+                    financial_year[value] = value.text
         return financial_year 
 
     # Some entities data is only able to be extracted through pypdf's .getFormTextFields 
     # the key is an item we are looking for/matches EX_GETTEXT dictionary and the value we receive is not == None
     def extractform(self,form_dictionary):
         financial_year = {}
-        for value in form_dictionary.items():
-            if value[0] in GET_FORM_TEXT_FIELDS_DICTIONARY.keys() and not re.search('None',str(value[1])):
-                line_item = GET_FORM_TEXT_FIELDS_DICTIONARY[value[0]]
-                financial_year[line_item] = value[1]
+        for key, value in form_dictionary.items():
+            if key and key in GET_FORM_TEXT_FIELDS_DICTIONARY.keys(): #run exist checks first, if it fails, the second condition will not be checked, saving you the time checking if key in keys
+                #line_item = GET_FORM_TEXT_FIELDS_DICTIONARY[value[0]]
+                financial_year[GET_FORM_TEXT_FIELDS_DICTIONARY[key]] = value
         return financial_year
 
 # Updates a variable data type   
@@ -188,15 +194,15 @@ class DataType:
     def non_year(non_year):
         #some values come with commas 
         int_ = str(non_year)
-        int_ = int(float(int_.replace(',','')))
-        value = int(float(int_))
+        int_ = int(int_.replace(',','')) #could just make it an int unless theres an error coming up I dont know about
+        value = int(int_)
         return value
     
     #Turn date into datetime
     def year(dictionary_year):
-        if re.search('-',dictionary_year):
+        if '-' in dictionary_year: #re.search('-',dictionary_year):
             #searching for the financial format YYYY-MM-DD since some pdf's include seconds 
-            year = re.findall('[0-9]*\-[0-9][0-9]\-[0-9][0-9]',dictionary_year)[0]
+            year = re.find(r'\d*\-\d{2}\-\d{2}',dictionary_year)
             value = datetime.strptime(year, '%Y-%m-%d')
         elif re.search('/',dictionary_year):
             sp = dictionary_year.split('/')
@@ -216,22 +222,22 @@ class DataType:
 class DataTypeUpdate:
     
     def update_data(financial_dictionary):
-        if financial_dictionary == None:
+        if financial_dictionary:
             updated_financial_dictionary = {}
             return updated_financial_dictionary
         updated_financial_dictionary = {}   
-        for item in financial_dictionary.items():
-            if item[0] == 'YEAR':
-                dict_value = DataType.year(item[1])
+        for key, value in financial_dictionary.items():
+            if key == 'YEAR':
+                updated_financial_dictionary[key] = DataType.year(value)
             else:
-                dict_value = DataType.non_year(item[1])
-            updated_financial_dictionary[item[0]] = dict_value
+                updated_financial_dictionary[key] = DataType.non_year(value)
         return updated_financial_dictionary
     
     def results_update(financials_year_xml,financials_year_form):
         if len(financials_year_xml) > len(financials_year_form):
             return financials_year_xml
-        elif len(financials_year_form) > len(financials_year_xml):
+        #elif len(financials_year_form) > len(financials_year_xml): no need for elif if there is no else case
+        else:
             return financials_year_form
 
 

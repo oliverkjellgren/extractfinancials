@@ -1,0 +1,7 @@
+#ignore these files
+
+__pycache__/
+
+*.log
+*.xlsx
+Excel/
