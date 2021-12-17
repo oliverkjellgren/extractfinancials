@@ -60,19 +60,48 @@ def main(filepath):
         return financials_data
 
 
-df = pd.read_excel('12_10_files.xlsx')
-main_df = df.iloc[2500:3000]
-updated_df = df.iloc[2500:3000]['FILEPATH']
-
+# HOW I would do it
 if __name__== "__main__":
+    df = pd.read_excel('12_10_files.xlsx')  # never have running code that isnt config or global variables outside of main or a method
+    main_df = df.iloc[2500:3000]
+    updated_df = df.iloc[2500:3000]['FILEPATH']
     for filepath in updated_df:
         try:
             financials_data = main(filepath)
             if len(financials_data) > 2:
-                main_df.loc[main_df['FILEPATH'] == filepath,'FINANCIALS_EXTRACTED'] = True
-                main_df.loc[main_df['FILEPATH'] == filepath,'PROCESSED_DATE'] = date.today()
+                """
+                updating dataframes in this way is inefficient, if you think about it, every time you process
+                a pdf program has to find the file path in the dataframe, also daframes are not built for iteration
+                even though its possible
+                
+                main_df.loc[main_df['FILEPATH'] == filepath,'FINANCIALS_EXTRACTED'] = True 
+                main_df.loc[main_df['FILEPATH'] == filepath,'PROCESSED_DATE'] = date.today()""" #no need to call date.today() every iteration
                 for datavalues in financials_data.items():
+                    # if you really want to iterate through a df, look into at and use indexing to update values
                     main_df.loc[main_df['FILEPATH'] == filepath, datavalues[0]] = datavalues[1]
-        except:
-            logging.debug(f"Exception occurred at {filepath}",exc_info=True)
+        except Exception as e: #log your error
+            logging.debug(f"ERROR: {e}; filepath: {filepath}",exc_info=True)
     main_df.to_excel('t_Batch.xlsx')
+
+
+# how I would do it
+if __name__== "__main__":
+    df = pd.read_excel('12_10_files.xlsx')
+    list_of_rows = df.iloc[2500:3000].to_dict('records') #lists is usually going to be the fastest thing for iteration, makes list of dicts from df
+    results = []  # its bad practice to modify data structures that you are iterating over so just add modified rows to result list
+    today = date.today()
+    for row in list_of_rows:
+        try:
+            financials_data = main(row['FILEPATH'])
+            if len(financials_data) > 2:
+                row['FINANCIALS_EXTRACTED'] = True
+                row['PROCESSED_DATE'] = today
+                for key, val in financials_data.items():
+                    row[key] = val
+            results.append(row)
+        except Exception as e: #log your error
+            logging.debug(f"ERROR: {e}; filepath: {filepath}",exc_info=True)
+            row['error'] = e  # could put error messages in result or not, personal preference
+            results.append(row)
+            pass #might as well just keep going and deal with errors after the run
+    pd.DataFrame(results).to_excel('t_Batch.xlsx', index=False)
